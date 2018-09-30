@@ -1,0 +1,563 @@
+{{ form_start(get_lyric_form_ajax, { 'attr' : {'novalidate': 'novalidate', 'role' : 'form', 'id': 'get-lyric-ajax'|default('form')} }) }}
+{{ form_end(get_lyric_form_ajax) }}
+
+{{ form_start(save_lyricsWord_form_ajax, { 'attr' : {'novalidate': 'novalidate', 'role' : 'form', 'id': 'save-lyricsWord-ajax'|default('form')} }) }}
+{{ form_end(save_lyricsWord_form_ajax) }}
+
+{{ form_start(delete_lyricsWord_form_ajax, { 'attr' : {'novalidate': 'novalidate', 'role' : 'form', 'id': 'delete-lyricsWord-ajax'|default('form')} }) }}
+{{ form_end(delete_lyricsWord_form_ajax) }}
+
+<style>
+    #newEnvironment {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0px;
+        left: 0px;
+        z-index: 5;
+    }
+    
+    #videoFrames {
+        position: absolute;
+        width: 350px;
+        top: 100px;
+        left: 0px;
+        bottom: 0px;
+        z-index: 5;
+        background-color: #1ab7ea;
+        user-select: none;
+        overflow-y: scroll;
+        overflow-x: hidden;
+    }
+    
+    #currentVideoLyrics {
+        position: absolute;
+        width: 500px;
+        height: 100%;
+        top: 100px;
+        left: 350px;
+        z-index: 5;
+        background-color: #777;
+        overflow-y: scroll;
+        overflow-x: hidden;
+    }
+    
+    
+    #editLyricsMenu {
+        position: absolute;
+        color: white;
+        top: 10px;
+        left: 10px;
+        width: 250px;
+        height: 50px;
+    }
+    
+    #editLyricsMenuBackGround {
+        position: absolute;
+        background-color: white;
+        opacity: 0.4;
+        width: 250px;
+        height: 50px;
+        top: 0px;
+        left: 0px;
+    }
+    
+    #video_speedLabel {
+        position: absolute;
+        width: 40px;
+        height: 30px;
+        top: 10px;
+        left: 10px;
+    }
+    
+    #video_speedButton {
+        position: absolute;
+        color: black;
+        width: 50px;
+        height: 30px;
+        top: 10px;
+        left: 50px;
+    }
+    
+    #currentVideoCronometro {
+        position: absolute;
+        width: 50px;
+        height: 30px;
+        top: 10px;
+        left: 110px;
+        overflow-y: hidden;
+        overflow-x: hidden;
+    }
+    
+    #play_pauseButton {
+        position: absolute;
+        height: 30px;
+        width: 30px;
+        top: 10px;
+        left: 170px;
+    }
+    
+</style>
+
+<div id="newEnvironment">
+    <div id='videoFrames'>
+        {#tiempo 1/4 de segundo cada div#}
+        video frames
+    </div>
+
+    <div id='currentVideoLyrics'>
+        {#previsualizacion de lyrics#}
+    </div>
+    
+
+    <div id="editLyricsMenu">
+        
+        <div id="editLyricsMenuBackGround">
+        </div>
+        
+        <div id="video_speedLabel">
+            speed
+        </div>
+
+        <select id="video_speedButton">
+            <option value="0.1">0.1</option>
+            <option value="0.2">0.2</option>
+            <option value="0.3">0.3</option>
+            <option value="0.4">0.4</option>
+            <option value="0.5">0.5</option>
+            <option value="0.6">0.6</option>
+            <option value="0.7">0.7</option>
+            <option value="0.8">0.8</option>
+            <option value="0.9">0.9</option>
+            <option value="1">1</option>
+        </select>
+
+        <div id="currentVideoCronometro">
+            {#velocidad - 1, 0.5, 0.25, 0.1...#} 
+            0.0
+        </div>
+
+        <div id="play_pauseButton">
+            <img style='
+                 width:30px; 
+                 height:30px; 
+                 opacity: 0.9;
+                 z-index: 1;' 
+                 src="files/images/icons/playBanner/playPause.png" alt="Mountain View">
+        </div>
+
+    </div>
+        
+</div>
+
+<script>
+    function prepare_edit_video_lyrics()
+    {
+        var getInfoVideo = setInterval(function() {
+            
+            var my_video = document.getElementById("my_video");
+            var videoDuration = my_video.duration;
+            var videoDurationInteger = parseInt(videoDuration);
+
+            if (videoDurationInteger)
+            {
+                {#alert("EXISTE "+videoDurationInteger);#}
+                getLyric(videoDurationInteger);
+                drawFrames(videoDurationInteger);
+                clearInterval(getInfoVideo);
+            } else
+            {
+                {#alert("NO EXISTE AÚN "+videoDurationInteger);#}
+            }
+        });
+    }
+    
+    var position_lyrics = 0;
+    
+    function getLyric(videoDurationInteger)
+    {
+{#        alert("get lyrics");#}
+        var form = $('#get-lyric-ajax');
+        var url = form.attr('action');
+
+        $.post(url, {current_video_id: current_video_id}, function (data)
+        {
+            var variable = data[0].variable;
+
+            var amountLyricsLine = data[0][0].amountLyricsLine;
+            
+            alert("amountLyricsLine... (edit lyric bundle) "+amountLyricsLine);
+            position_lyrics = 0;
+            document.getElementById("currentVideoLyrics").innerHTML = "";
+            for (d=0; d<amountLyricsLine; d++)
+            {
+
+            
+                var lyricslineId = data[d][0].lyricslineId;
+                drawNewLine_lyrics(lyricslineId);
+                
+                var amountWord = data[d][0].amountWord;
+
+                estrofaAmount_EditLyrics = amountLyricsLine; 
+                palabraAmount_EditLyrics = amountWord; 
+            
+                alert("estrofaAmount_EditLyrics... "+estrofaAmount_EditLyrics+
+                      "palabraAmount_EditLyrics... "+palabraAmount_EditLyrics);
+                for (e=0; e<=amountWord; e++)
+                {
+                    var keywordId = data[d][e].keywordId;
+                    var keywordContent = data[d][e].keywordContent;
+                    var lyricslineId = data[d][e].lyricslineId;
+                    var lyricswordId = data[d][e].lyricswordId;
+                    var lyricswordStarttime = data[d][e].lyricswordStarttime;
+                    var lyricswordEndtime = data[d][e].lyricswordEndtime;
+                    var amountKeywords = data[d][e].amountKeywords;
+                    var palabra = data[d][e].palabra;
+                    var estrofa = data[d][e].estrofa;
+                    var amountWord = data[d][e].amountWord;
+                    var amountLyricsLine = data[d][e].amountLyricsLine;
+                    var currentWordPosition = data[d][e].currentWordPosition;
+                    
+                    lyricsWord_EditLyrics[d][e][0] = keywordId;
+                    lyricsWord_EditLyrics[d][e][1] = keywordContent;
+                    lyricsWord_EditLyrics[d][e][2] = lyricslineId;
+                    lyricsWord_EditLyrics[d][e][3] = lyricswordId;
+                    lyricsWord_EditLyrics[d][e][4] = lyricswordStarttime;
+                    lyricsWord_EditLyrics[d][e][5] = lyricswordEndtime;
+                    lyricsWord_EditLyrics[d][e][6] = amountKeywords;
+                    lyricsWord_EditLyrics[d][e][7] = palabra;
+                    lyricsWord_EditLyrics[d][e][8] = estrofa;
+                    lyricsWord_EditLyrics[d][e][9] = amountWord;
+                    lyricsWord_EditLyrics[d][e][10] = amountLyricsLine;
+                    lyricsWord_EditLyrics[d][e][11] = currentWordPosition;
+                    
+                    appendWordToLine_lyrics(
+                            keywordId,
+                            keywordContent,
+                            lyricslineId,
+                            lyricswordId,
+                            lyricswordStarttime,
+                            lyricswordEndtime,
+                            amountKeywords,
+                            palabra,
+                            estrofa,
+                            amountWord,
+                            amountLyricsLine,
+                            currentWordPosition
+                        );
+                
+                }
+            }
+        }).fail(function () {
+            alert('ERROR get-lyric-ajax');
+        });
+    }
+        
+    function drawNewLine_lyrics(lyricslineId)
+    {
+        position_lyrics += 25;
+        $("#currentVideoLyrics").append(
+            "<div id='currentVideo_lyricsLine"+lyricslineId+"' class='lyricsLine_lyrics' style='top: "+position_lyrics+"px;'>"+
+            " "+
+            "</div>"
+        );
+    }
+    
+    function appendWordToLine_lyrics(
+                keywordId,
+                keywordContent,
+                lyricslineId,
+                lyricswordId,
+                lyricswordStarttime,
+                lyricswordEndtime,
+                amountKeywords,
+                palabra,
+                estrofa,
+                amountWord,
+                amountLyricsLine,
+                currentWordPosition
+            )
+    {
+        $("#currentVideo_lyricsLine"+lyricslineId).append(
+            "<div id='currentVideo_lyricsWord"+keywordId+"' class='lyricsWord_lyrics'>"+
+            "&nbsp"+keywordContent+"&nbsp"+
+            "</div>"
+        );
+    }
+    
+    
+    
+    
+    
+    
+    
+    function drawFrames(videoDurationInteger)
+    {
+        var videoFrames = document.getElementById("videoFrames");
+        videoFrames.innerHTML = "";
+        var j=0;
+        
+        for(i=0; i<videoDurationInteger; i+=0.25)
+        {
+            $("#videoFrames").append(
+                "<div id='frame"+j+"' class='video_frame' draw_status='available' data-id3='"+i+"' data-id4='"+j+"'>"+
+                    "<div id='start_time"+j+"' class='start_time'>"+
+                    i+
+                    "</div>"+
+                    "<div id='word_lyrics"+j+"' class='word_lyrics'>"+
+                    
+                        "<div id='menu_lyricsWord"+j+"' class='menu_lyricsWord'>"+
+
+                        "<input id='write_lyricsWord"+j+"' class='write_lyricsWord'  data-id3='"+i+"' data-id4='"+j+"' "+
+                        "type='text' placeholder='Write here the word' name='keyword'/>"+
+
+                        "<div id='save_lyricsWord"+j+"' class='save_lyricsWord animatedButton' data-id3='"+i+"' data-id4='"+j+"'>"+
+                        "OK"+
+                        "</div>"+
+                        
+                        "<div id='edit_lyricsWord"+j+"' class='edit_lyricsWord animatedButton' data-id3='"+i+"' data-id4='"+j+"'>"+
+                        "E"+
+                        "</div>"+
+
+                        "<div id='replay_lyricsWord"+j+"' class='replay_lyricsWord animatedButton' data-id3='"+i+"' data-id4='"+j+"'>"+
+                        ">"+
+                        "</div>"+
+
+                        "<div id='delete_lyricsWord"+j+"' class='delete_lyricsWord animatedButton' data-id3='"+i+"' data-id4='"+j+"'>"+
+                        "X"+
+                        "</div>"+
+
+                        "</div>"+
+                    
+                    "</div>"+
+                "</div>"
+            );
+            
+            $('#save_lyricsWord'+j)
+            .click(function () { // cuando el mouse se mueve sobre el div
+                var id = $(this).data('id4');
+                
+                var write_lyricsWordId = "write_lyricsWord"+id;
+                var write_lyricsWord = document.getElementById(write_lyricsWordId).value;
+                save_lyricsWord(); //GUI
+                save_lyricsWord_crud(write_lyricsWord);// CRUD
+            });
+    
+            $('#edit_lyricsWord'+j)
+            .click(function () { // cuando el mouse se mueve sobre el div
+                alert("edit_lyricsWord");
+                edit_lyricsWord(); //GUI
+            });
+    
+            $('#replay_lyricsWord'+j)
+            .click(function () { // cuando el mouse se mueve sobre el div
+                alert("replay_lyricsWord");
+                replay_lyricsWord(); //GUI
+            });
+    
+            $('#delete_lyricsWord'+j)
+            .click(function () { // cuando el mouse se mueve sobre el div
+                delete_lyricsWord(); //GUI
+                delete_lyricsWord_crud();// CRUD
+            });
+            
+            $('#frame'+j)
+            .mousemove(function () { // cuando el mouse se mueve sobre el div
+                var time = $(this).data('id3');
+                var id = $(this).data('id4');
+                
+                var thisFrame = "frame"+id;
+                var thisWordId = "word_lyrics"+id;
+                var thisTimeId = "start_time"+id;
+                
+                var frame = document.getElementById(thisFrame);
+                var word_lyrics = document.getElementById(thisWordId);
+                var start_time = document.getElementById(thisTimeId);
+                
+                if (frame.getAttribute('draw_status') === "unavailable" && mouse_status === 1)
+                {
+                    mouse_status = 0;
+                    draw_word();
+                } else if (frame.getAttribute('draw_status') === "available" && mouse_status === 1)
+                {
+                    lastTime = id;
+                    draw_frame(frame, word_lyrics, start_time);
+                    displace_video(time);
+                }
+            })
+            .mouseup(function () { // cuando el boton del mouse se deja de oprimir
+                var time = $(this).data('id3');
+                var id = $(this).data('id4');
+                
+                var thisFrame = "frame"+id;
+                var thisWordId = "word_lyrics"+id;
+                var thisTimeId = "start_time"+id;
+                
+                var frame = document.getElementById(thisFrame);
+                var word_lyrics = document.getElementById(thisWordId);
+                var start_time = document.getElementById(thisTimeId);
+                
+                if (frame.getAttribute('draw_status') === "unavailable" && mouse_status === 1)
+                {
+                    
+                } else if (frame.getAttribute('draw_status') === "available" && mouse_status === 1)
+                {
+                    lastTime = id;
+                    draw_word();
+                }
+                
+                mouse_status = 0;
+            })
+            .mousedown(function () { // cuando el boton del mouse se encuentra oprimido
+                mouse_status = 1;
+                var time = $(this).data('id3');
+                var id = $(this).data('id4');
+                
+                var thisFrame = "frame"+id;
+                var thisWordId = "word_lyrics"+id;
+                var thisTimeId = "start_time"+id;
+                
+                var frame = document.getElementById(thisFrame);
+                var word_lyrics = document.getElementById(thisWordId);
+                var start_time = document.getElementById(thisTimeId);
+                
+                if (frame.getAttribute('draw_status') === "unavailable" && mouse_status === 1)
+                {
+                    mouse_status = 0;
+                    draw_word();
+                } else if (frame.getAttribute('draw_status') === "available" && mouse_status === 1)
+                {
+                    lastTime = id;
+                    firstTime = id;
+                    draw_frame(frame, word_lyrics, start_time);
+                    displace_video(time);
+                }
+            })
+            .mouseover(function () { // cuando el cursor se encuentra por encima del frame
+                var time = $(this).data('id3');
+                var id = $(this).data('id4');
+                
+                var thisFrame = "frame"+id;
+                var thisWordId = "word_lyrics"+id;
+                var thisTimeId = "start_time"+id;
+                
+                var frame = document.getElementById(thisFrame);
+                var word_lyrics = document.getElementById(thisWordId);
+                var start_time = document.getElementById(thisTimeId);
+                
+                if (frame.getAttribute('draw_status') === "unavailable" && mouse_status === 1)
+                {
+                    
+                } else if (frame.getAttribute('draw_status') === "available" && mouse_status === 1)
+                {
+                    
+                } else if (frame.getAttribute('draw_status') === "available" && mouse_status === 0) {
+                    frame.style.opacity = "1";
+                }
+            })
+            .mouseout(function () { // cuando el cursor se encuentra por encima del frame
+                var time = $(this).data('id3');
+                var id = $(this).data('id4');
+                
+                var thisFrame = "frame"+id;
+                var thisWordId = "word_lyrics"+id;
+                var thisTimeId = "start_time"+id;
+                
+                var frame = document.getElementById(thisFrame);
+                var word_lyrics = document.getElementById(thisWordId);
+                var start_time = document.getElementById(thisTimeId);
+                
+                if (frame.getAttribute('draw_status') === "unavailable" && mouse_status === 1)
+                {
+                    
+                } else if (frame.getAttribute('draw_status') === "available" && mouse_status === 1)
+                {
+                    
+                } else if (frame.getAttribute('draw_status') === "available" && mouse_status === 0) {
+                    frame.style.opacity = "0.4";
+                }
+
+
+            });
+            
+            j++;
+        }
+    }
+    
+    
+    
+    
+    
+    var currentVideoCronometro = document.getElementById("currentVideoCronometro");
+    currentVideoCronometro.addEventListener("click", enableLyricsEdit, false);
+    function enableLyricsEdit()
+    {
+        var video_speedButton = document.getElementById("video_speedButton").value;
+        
+        alert("enableLyricsEdit.. video_speedButton: "+video_speedButton);
+        
+        var v = document.getElementById("my_video");
+        v.playbackRate = video_speedButton;
+        v.currentTime = 0;
+        
+        speed_millisecond = video_speedButton * 1000;
+        
+        var videoDuration_2 = v.duration;
+        
+        var currentVideoCronometro = document.getElementById("currentVideoCronometro");
+        
+        var animatedLyrics_2 = setInterval(function() {
+            currentVideoCronometro.innerHTML = v.currentTime.toFixed(2);
+            
+            v.onended = function() {
+                alert("el video finalizo");
+                clearInterval(animatedLyrics_2);                
+            };
+        }, 250);
+    }
+    
+    
+    
+    function save_lyricsWord_crud(write_lyricsWord)
+    {
+        var form = $('#save-lyricsWord-ajax');
+        var url = form.attr('action');
+
+        var startTime = 0;
+        var endTime = 10;
+
+        $.post(url, {write_lyricsWord: write_lyricsWord,
+            current_video_id: current_video_id,
+            startTime: startTime,
+            endTime: endTime
+        }, function (data)
+        {
+            var write_lyricsWord_value = data[0].write_lyricsWord;
+            var current_video_id_value = data[0].current_video_id;
+            var startTime_value = data[0].startTime;
+            var endTime_value = data[0].endTime;
+                            
+        }).fail(function () {
+            alert('ERROR save-lyricsWord-ajax');
+        });
+    }
+    
+    function delete_lyricsWord_crud()
+    {
+        var form = $('#delete-lyricsWord-ajax');
+        var url = form.attr('action');
+
+        $.post(url, function (data)
+        {
+            {#alert("delete-lyricsWord-ajax");#}
+            var variable = data[0].variable;
+                    
+            alert("moscas en la casa... "+variable);
+                    
+            {#'variable' => "funciona"#}
+                    
+        }).fail(function () {
+            alert('ERROR delete-lyricsWord-ajax');
+        });
+    }
+</script>

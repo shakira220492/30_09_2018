@@ -1,0 +1,101 @@
+.video_frame {
+    position: relative;
+    width: 330px;
+    height: 20px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-top: 0px;
+    opacity: 0.4;
+    cursor: pointer;
+    transition-property: all;
+    transition-duration: 0.4s;
+}
+
+.start_time {
+    background-color: gray;
+    width: 60px;
+    height: 20px;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+}
+
+.word_lyrics {
+    background-color: gray;
+    width: 260px;
+    height: 20px;
+    position: absolute;
+    left: 60px;
+    top: 0px;
+}
+
+.write_lyricsWord {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 150px;
+    height: 17px;
+    border: 0;
+    background-color: white;
+    color: black;
+    align-content: center;
+}
+
+.save_lyricsWord {
+    position: absolute;
+    top: 0px;
+    left: 150px;
+    width: 17px;
+    height: 17px;
+    background-color: white;
+    color: black;
+    cursor: pointer;
+    display: block;
+}
+
+.edit_lyricsWord {
+    position: absolute;
+    top: 0px;
+    left: 150px;
+    width: 17px;
+    height: 17px;
+    background-color: white;
+    color: black;
+    cursor: pointer;
+    display: none;
+    text-align: center;
+}
+
+.replay_lyricsWord {
+    position: absolute;
+    top: 0px;
+    left: 184px;
+    width: 17px;
+    height: 17px;
+    background-color: white;
+    color: black;
+    cursor: pointer;
+    display: block;
+    text-align: center;
+}
+
+.delete_lyricsWord {
+    position: absolute;
+    top: 0px;
+    left: 167px;
+    width: 17px;
+    height: 17px;
+    background-color: white;
+    color: black;
+    cursor: pointer;
+    display: block;
+    text-align: center;
+}
+
+.menu_lyricsWord {
+    position: relative;
+    top: 0px;
+    left: 0px;
+    display: none;
+}
